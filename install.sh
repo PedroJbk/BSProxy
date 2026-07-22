@@ -1,8 +1,8 @@
 #!/bin/bash
-# BSProxy Free
-REPO_URL="https://github.com/PedroJbk/BSProxy.git"
+# AWProxy Installer
+REPO_URL="https://github.com/PedroJbk/AWProxy.git"
 REPO_BRANCH="main"
-CMD_NAME="bsproxy"
+CMD_NAME="awproxy"
 TOTAL_STEPS=9
 CURRENT_STEP=0
 
@@ -25,7 +25,7 @@ if [ "$EUID" -ne 0 ]; then
 else
     clear
 
-    # Banner BSPROXY
+    # Banner AWPROXY
     echo -e "\033[0;34m   ██████╗ ███████╗██████╗ ██████╗  ██████╗ ██╗  ██╗██╗   ██╗"
     echo -e "\033[0;37m   ██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔═══██╗╚██╗██╔╝╚██╗ ██╔╝"
     echo -e "\033[0;34m   ██████╔╝███████╗██████╔╝██████╔╝██║   ██║ ╚███╔╝  ╚████╔╝ "
@@ -69,61 +69,61 @@ else
     apt-get install curl build-essential git -y > /dev/null 2>&1 || error_exit "Falha ao instalar pacotes"
     increment_step
 
-    show_progress "Criando diretorio /opt/bsproxy..."
-    mkdir -p /opt/bsproxy > /dev/null 2>&1
+    show_progress "Criando diretorio /opt/awproxy..."
+    mkdir -p /opt/awproxy > /dev/null 2>&1
     increment_step
 
-    show_progress "Instalando Rust..."
+    show_progress "Instalando AWPro..."
     if ! command -v rustc &> /dev/null; then
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > /dev/null 2>&1 || error_exit "Falha ao instalar Rust"
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > /dev/null 2>&1 || error_exit "Falha ao instalar AWPro"
         source "$HOME/.cargo/env"
     fi
     increment_step
 
-    show_progress "Compilando BSProxy, isso pode levar algum tempo..."
-    if [ -d "/root/BSProxy" ]; then
-        rm -rf /root/BSProxy
+    show_progress "Compilando AWProxy, isso pode levar algum tempo..."
+    if [ -d "/root/AWProxy" ]; then
+        rm -rf /root/AWProxy
     fi
-    git clone --branch "$REPO_BRANCH" "$REPO_URL" /root/BSProxy > /dev/null 2>&1 || error_exit "Falha ao clonar BSProxy"
+    git clone --branch "$REPO_BRANCH" "$REPO_URL" /root/AWProxy > /dev/null 2>&1 || error_exit "Falha ao clonar AWProxy"
 
-    if [ -f /root/BSProxy/menu.sh ]; then
-        cp /root/BSProxy/menu.sh /opt/bsproxy/menu
-        chmod +x /opt/bsproxy/menu
+    if [ -f /root/AWProxy/menu.sh ]; then
+        cp /root/AWProxy/menu.sh /opt/awproxy/menu
+        chmod +x /opt/awproxy/menu
     fi
 
-    cd /root/BSProxy || error_exit "Diretório do BSProxy não encontrado"
-    cargo build --release --jobs "$(nproc)" > /dev/null 2>&1 || error_exit "Falha ao compilar BSProxy"
+    cd /root/AWProxy || error_exit "Diretório do AWProxy não encontrado"
+    cargo build --release --jobs "$(nproc)" > /dev/null 2>&1 || error_exit "Falha ao compilar AWProxy"
 
-    if [ -f ./target/release/bsproxy ]; then
-        mv ./target/release/bsproxy /opt/bsproxy/proxy || error_exit "Binário compilado não encontrado"
-        chmod +x /opt/bsproxy/proxy
+    if [ -f ./target/release/awproxy ]; then
+        mv ./target/release/awproxy /opt/awproxy/proxy || error_exit "Binário compilado não encontrado"
+        chmod +x /opt/awproxy/proxy
     else
-        error_exit "Binário 'bsproxy' não encontrado após compilação"
+        error_exit "Binário 'awproxy' não encontrado após compilação"
     fi
     increment_step
 
     show_progress "Configurando permissões..."
-    chmod +x /opt/bsproxy/proxy
-    [ -f /opt/bsproxy/menu ] && chmod +x /opt/bsproxy/menu
+    chmod +x /opt/awproxy/proxy
+    [ -f /opt/awproxy/menu ] && chmod +x /opt/awproxy/menu
 
-    if [ -f /opt/bsproxy/menu ]; then
-        cp /opt/bsproxy/menu /usr/local/bin/bsproxy
+    if [ -f /opt/awproxy/menu ]; then
+        cp /opt/awproxy/menu /usr/local/bin/awproxy
     else
-        cp /opt/bsproxy/proxy /usr/local/bin/bsproxy
+        cp /opt/awproxy/proxy /usr/local/bin/awproxy
     fi
-    chmod +x /usr/local/bin/bsproxy
+    chmod +x /usr/local/bin/awproxy
     increment_step
 
     show_progress "Limpando diretórios temporários..."
     cd /root/
-    rm -rf /root/BSProxy/
+    rm -rf /root/AWProxy/
     increment_step
 
     echo ""
     echo -e "\033[0;32m✅ Instalação concluída com sucesso!\033[0m"
     echo ""
-    echo "🚀 Digite 'bsproxy' para acessar o menu."
-    echo "   Ou 'bsproxy -p 80' para abrir porta 80 diretamente."
+    echo "🚀 Digite 'awproxy' para acessar o menu."
+    echo "   Ou 'awproxy -p 80' para abrir porta 80 diretamente."
     echo ""
     echo "📡 Protocolos suportados:"
     echo "   - SOCKS5 (byte 0x05)"
