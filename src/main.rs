@@ -269,7 +269,7 @@ struct ProxyConfig {
 
 fn parse_args(args: &[String]) -> ProxyConfig {
     let mut port = 80u16;
-    let mut status = "@AWProxy".to_string();
+    let mut status = "@AWProxy1".to_string();
     let mut tls = false;
     let mut ssh_only = false;
 
