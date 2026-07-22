@@ -2,36 +2,33 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, copy_bidirectional};
 use tokio::net::TcpStream;
 use anyhow::Result;
 use log::{info, debug};
+use tokio::time::{timeout, Duration};
 
 pub async fn handle_security(mut socket: TcpStream, status: &str) -> Result<()> {
-    info!("🔐 SECURITY handshake (Tripla Resposta)...");
+    info!("🔐 SECURITY/SSHPRO handshake iniciado...");
     
-    // Consumir os headers da requisição inicial de forma segura
-    let mut buf = [0u8; 4096];
-    let n = socket.read(&mut buf).await?;
-    if n > 0 {
-        debug!("📥 SECURITY Request: {}", String::from_utf8_lossy(&buf[..n]));
-    }
-    
-    // Conforme o print do usuário e requisitos de "TCP/SECURITY":
-    
-    // 1. Status: 101 (STATUS) Informational
-    let resp1 = format!("HTTP/1.1 101 TCP/SECURITY {}\r\n\r\n", status);
+    // 1. Resposta IMEDIATA: 101 (SSHPRO)
+    // O Injetor muitas vezes espera o 101 antes de enviar o resto do payload.
+    let resp1 = format!("HTTP/1.1 101 (SSHPRO) Informational\r\n\r\n");
     socket.write_all(resp1.as_bytes()).await?;
-    debug!("📤 Sent Response 1: 101 TCP/SECURITY");
+    debug!("📤 Sent Response 1: 101 (SSHPRO)");
 
-    // 2. Enviando 200 HTTP status - HTTP/1.1 200 OK
+    // 2. Tentar ler o payload, mas sem travar se ele não vier completo
+    let mut buf = [0u8; 2048];
+    let _ = timeout(Duration::from_millis(300), socket.read(&mut buf)).await;
+
+    // 3. Segunda Resposta: 200 OK
     socket.write_all(b"HTTP/1.1 200 OK\r\n\r\n").await?;
     debug!("📤 Sent Response 2: 200 OK");
 
-    // 3. HTTP/1.1 200 (STATUS)
-    let resp3 = format!("HTTP/1.1 200 TCP/SECURITY {}\r\n\r\n", status);
+    // 4. Terceira Resposta: 200 SSHPRO
+    let resp3 = format!("HTTP/1.1 200 {}\r\n\r\n", if status.is_empty() { "SSHPRO" } else { status });
     socket.write_all(resp3.as_bytes()).await?;
-    debug!("📤 Sent Response 3: 200 TCP/SECURITY");
+    debug!("📤 Sent Response 3: 200 SSHPRO");
 
-    info!("🔐 SECURITY handshake complete!");
+    info!("🔐 Handshake complete!");
     
-    // Conectar ao backend (SSH por padrão para Security)
+    // Conectar ao backend SSH
     info!("🔗 Conectando ao backend SSH (127.0.0.1:22)...");
     let mut remote = match TcpStream::connect("127.0.0.1:22").await {
         Ok(s) => s,
@@ -41,7 +38,7 @@ pub async fn handle_security(mut socket: TcpStream, status: &str) -> Result<()> 
         }
     };
 
-    info!("✅ SECURITY Túnel iniciado.");
+    info!("✅ Túnel iniciado.");
     let _ = copy_bidirectional(&mut socket, &mut remote).await;
     
     Ok(())

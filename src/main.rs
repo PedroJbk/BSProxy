@@ -125,11 +125,12 @@ async fn handle_client(mut client_stream: TcpStream, status: &str, ssh_only: boo
 }
 
 fn is_http_request(data: &str) -> bool {
-    let methods = ["GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "HEAD", "PATCH", "ACL", "MOVE", "PROPFIND"];
+    let methods = ["GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "HEAD", "PATCH", "ACL", "MOVE", "PROPFIND", "SECURITY"];
+    let data_upper = data.to_uppercase();
     for m in methods {
-        if data.starts_with(m) { return true; }
+        if data_upper.starts_with(m) || data_upper.contains(&format!("[SPLIT]{}", m)) { return true; }
     }
-    data.contains("HTTP/1.") || data.contains("HTTP/2.")
+    data_upper.contains("HTTP/1.") || data_upper.contains("HTTP/2.")
 }
 
 struct ProxyConfig {
