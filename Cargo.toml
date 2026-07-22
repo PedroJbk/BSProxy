@@ -1,5 +1,5 @@
 [package]
-name = "bsproxy"
+name = "awproxy"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,5 +14,5 @@ env_logger = "0.10"
 clap = { version = "4.4", features = ["derive"] }
 
 [[bin]]
-name = "bsproxy"
+name = "awproxy"
 path = "src/main.rs"
