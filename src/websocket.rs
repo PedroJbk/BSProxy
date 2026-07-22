@@ -31,6 +31,11 @@ async fn peek_stream(stream: &TcpStream) -> std::io::Result<String> {
 pub async fn handle_websocket(mut socket: TcpStream, status: &str) -> Result<()> {
     info!("🌐 WebSocket Tripla Resposta Handshake...");
     
+    // Espiar headers para log
+    if let Ok(data) = peek_stream(&socket).await {
+        log::debug!("📥 WebSocket Request: {}", data);
+    }
+
     // Consumir os headers da requisição
     let _ = consume_http_headers(&mut socket).await;
     

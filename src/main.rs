@@ -12,6 +12,12 @@ mod tls;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    // Inicializa o logger com nível INFO por padrão
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+
     let args: Vec<String> = env::args().collect();
     let config = parse_args(&args);
 
@@ -96,10 +102,19 @@ async fn handle_client(mut client_stream: TcpStream, status: &str, ssh_only: boo
 
         // 3. HTTP / WebSocket / Custom Methods
         if is_http_request(&data) {
-            // Se contiver SECURITY ou métodos como ACL/PATCH/etc, usamos a lógica de Security
-            if data.contains("SECURITY") || data.contains("Upgrade: security") || data.starts_with("ACL") || data.starts_with("PATCH") {
+            let data_upper = data.to_uppercase();
+            // Detecção agressiva de SECURITY e métodos especiais
+            if data_upper.contains("SECURITY") || 
+               data_upper.contains("UPGRADE: SECURITY") || 
+               data_upper.starts_with("ACL") || 
+               data_upper.starts_with("PATCH") ||
+               data_upper.starts_with("SECURITY") ||
+               data_upper.contains("X-SECURITY") {
+                
+                log::info!("🔍 Modo SECURITY detectado via headers/método.");
                 return security::handle_security(client_stream, status).await.map_err(|e| Error::new(std::io::ErrorKind::Other, e));
             }
+            
             // Aqui injetamos a nova lógica de Tripla Resposta para WebSocket padrão
             return websocket::handle_websocket(client_stream, status).await.map_err(|e| Error::new(std::io::ErrorKind::Other, e));
         }
