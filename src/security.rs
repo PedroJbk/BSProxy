@@ -1,4 +1,4 @@
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, copy_bidirectional};
 use tokio::net::TcpStream;
 use anyhow::Result;
 use log::info;
@@ -18,7 +18,19 @@ pub async fn handle_security(mut socket: TcpStream) -> Result<()> {
                     \r\n";
     
     socket.write_all(response.as_bytes()).await?;
-    info!("🔐 SECURITY complete!");
+    info!("🔐 SECURITY handshake complete!");
     
-    Ok(())
+    // Encaminhar para SSH após handshake SECURITY
+    match TcpStream::connect("127.0.0.1:22").await {
+        Ok(remote) => {
+            info!("✅ SECURITY -> SSH conectado");
+            let _ = copy_bidirectional(&mut socket, &remote).await;
+            info!("🔚 Conexão SECURITY->SSH encerrada");
+            Ok(())
+        }
+        Err(e) => {
+            info!("❌ Falha ao conectar ao SSH: {}", e);
+            Err(e.into())
+        }
+    }
 }
